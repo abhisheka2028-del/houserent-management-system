@@ -1,0 +1,75 @@
+# ==============================================================================
+# HouseRent - Kubernetes Deployment Manifest
+# Module 4: Container Orchestration Using Kubernetes
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: houserent-deployment
+  namespace: houserent
+  labels:
+    app: houserent
+spec:
+  # ARCHITECTURAL NOTE FOR LOCAL DEPLOYMENTS & VIVA EVALUATION:
+  # In this local deployment, SQLite and uploaded images are persisted via a
+  # PersistentVolumeClaim (houserent-pvc) with a single Pod replica to ensure
+  # strict write consistency.
+  # For high-availability multi-replica scaling in cloud production, an external
+  # RDBMS (such as PostgreSQL or MySQL) and object storage (such as AWS S3 or MinIO)
+  # must be configured, because SQLite files are not automatically synchronized
+  # across independent container filesystems.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: houserent
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: houserent
+    spec:
+      containers:
+        - name: houserent
+          image: houserent:v1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: houserent-config
+            - secretRef:
+                name: houserent-secret
+          volumeMounts:
+            - name: houserent-storage
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          # Readiness Probe: ensures container is ready before receiving traffic
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Liveness Probe: restarts unhealthy container if it hangs
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: houserent-storage
+          persistentVolumeClaim:
+            claimName: houserent-pvc

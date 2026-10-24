@@ -1,0 +1,17 @@
+# ==============================================================================
+# HouseRent - PersistentVolumeClaim for SQLite & Uploaded Images
+# Ensures database records and uploaded files survive pod restarts and rollouts
+# ==============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: houserent-pvc
+  namespace: houserent
+  labels:
+    app: houserent
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

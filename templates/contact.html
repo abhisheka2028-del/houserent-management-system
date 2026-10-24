@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us - HouseRent{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card border-0">
+                <div class="text-center mb-4">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold mb-2">Get in Touch</span>
+                    <h2 class="fw-bold mb-1">Contact HouseRent Support</h2>
+                    <p class="text-muted small">Have questions about a listing, lease agreements, or technical support? Drop us a message.</p>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <i class="bi bi-geo-alt text-primary fs-3 d-block mb-1"></i>
+                            <h6 class="fw-bold mb-1">Office Location</h6>
+                            <small class="text-muted">Koramangala, Bengaluru, Karnataka 560034</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <i class="bi bi-envelope text-primary fs-3 d-block mb-1"></i>
+                            <h6 class="fw-bold mb-1">Email Support</h6>
+                            <small class="text-muted">support@houserent.com</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <i class="bi bi-telephone text-primary fs-3 d-block mb-1"></i>
+                            <h6 class="fw-bold mb-1">Helpline</h6>
+                            <small class="text-muted">+91 (80) 4567-8900</small>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('contact') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="name">Your Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="name@domain.com" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="subject">Subject</label>
+                            <input type="text" id="subject" name="subject" class="form-control" placeholder="e.g. Inquiry regarding Koramangala apartment listing">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="message">Message *</label>
+                            <textarea id="message" name="message" class="form-control" rows="4" placeholder="How can our support team assist you today?" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary w-100 btn-rounded py-2 fw-semibold">
+                            <i class="bi bi-send me-1"></i> Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

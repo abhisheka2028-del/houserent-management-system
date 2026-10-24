@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - HouseRent Platform{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="form-card mb-4 border-0">
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-semibold mb-2">Our Mission</span>
+                <h1 class="fw-bold mb-3">Reinventing the Rental Journey</h1>
+                <p class="fs-5 text-secondary lh-lg mb-4">
+                    HouseRent was established to bridge the gap between verified homeowners and trustworthy tenants. We eliminate hidden brokerage fees, unnecessary middlemen, and obscure lease terms, bringing radical transparency and ease to residential leasing.
+                </p>
+
+                <div class="row g-4 my-2">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-light text-center h-100">
+                            <i class="bi bi-shield-check text-primary fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold">100% Verified</h5>
+                            <p class="small text-muted mb-0">Every property listing is backed by verified owners and clear pricing specifications.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-light text-center h-100">
+                            <i class="bi bi-wallet2 text-success fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold">Zero Brokerage</h5>
+                            <p class="small text-muted mb-0">Connect directly with homeowners and agree on terms without commission burdens.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-light text-center h-100">
+                            <i class="bi bi-chat-square-dots text-info fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold">Direct Inquiries</h5>
+                            <p class="small text-muted mb-0">Submit rental inquiries online and track landlord approval status in real time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-top">
+                    <h4 class="fw-bold mb-3">Platform Architecture & Reliability</h4>
+                    <p class="text-secondary lh-lg mb-3">
+                        HouseRent is engineered following modern full-stack web standards with Python Flask, SQLite, and declarative DevOps infrastructure. Built for enterprise containerization and orchestration, it supports zero-downtime rolling updates, automated health monitoring probes, and secure multi-role permissions.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="{{ url_for('houses') }}" class="btn btn-primary btn-rounded px-4 py-2">
+                            Explore Properties
+                        </a>
+                        <a href="{{ url_for('contact') }}" class="btn btn-outline-secondary btn-rounded px-4 py-2">
+                            Contact Our Team
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

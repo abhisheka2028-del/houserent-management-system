@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HouseRent - Modern House Rental Platform{% endblock %}</title>
+    <meta name="description" content="Discover verified houses, apartments, and villas for rent with transparent pricing, direct landlord inquiries, and zero hidden brokerage.">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Platform Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}" id="brand-logo">
+                <i class="bi bi-house-door-fill"></i> HouseRent
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'houses' %}active{% endif %}" href="{{ url_for('houses') }}">
+                            <i class="bi bi-buildings"></i> Browse Houses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">
+                            <i class="bi bi-info-circle"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}">
+                            <i class="bi bi-envelope"></i> Contact
+                        </a>
+                    </li>
+
+                    {% if current_user.is_authenticated and current_user.is_renter %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'my_requests' %}active{% endif %}" href="{{ url_for('my_requests') }}">
+                            <i class="bi bi-journal-check"></i> My Rental Portal
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% if current_user.is_authenticated and current_user.is_owner %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'owner_dashboard' %}active{% endif %}" href="{{ url_for('owner_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Owner Portal
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}" href="{{ url_for('admin_users') }}">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin_requests' %}active{% endif %}" href="{{ url_for('admin_requests') }}">
+                            <i class="bi bi-inbox"></i> Inquiries
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_owner or current_user.is_admin %}
+                        <li class="nav-item">
+                            <a class="btn btn-outline-primary btn-sm btn-rounded" href="{{ url_for('add_house') }}">
+                                <i class="bi bi-plus-circle me-1"></i> List Property
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 700;">
+                                    {{ current_user.full_name[:1] }}
+                                </div>
+                                <span class="fw-semibold">{{ current_user.full_name }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary text-uppercase" style="font-size: 0.68rem;">
+                                    {{ current_user.role }}
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+                                <li class="px-3 py-2 border-bottom">
+                                    <small class="text-muted d-block">Signed in as</small>
+                                    <strong class="d-block text-truncate" style="max-width: 180px;">@{{ current_user.username }}</strong>
+                                </li>
+                                {% if current_user.is_admin %}
+                                <li><a class="dropdown-item py-2" href="{{ url_for('dashboard') }}"><i class="bi bi-grid me-2 text-primary"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item py-2" href="{{ url_for('admin_users') }}"><i class="bi bi-people me-2 text-primary"></i> User Management</a></li>
+                                <li><a class="dropdown-item py-2" href="{{ url_for('admin_requests') }}"><i class="bi bi-inbox me-2 text-primary"></i> All Inquiries</a></li>
+                                {% elif current_user.is_owner %}
+                                <li><a class="dropdown-item py-2" href="{{ url_for('owner_dashboard') }}"><i class="bi bi-speedometer2 me-2 text-primary"></i> Owner Portal</a></li>
+                                <li><a class="dropdown-item py-2" href="{{ url_for('add_house') }}"><i class="bi bi-plus-circle me-2 text-primary"></i> Add New Listing</a></li>
+                                {% else %}
+                                <li><a class="dropdown-item py-2" href="{{ url_for('my_requests') }}"><i class="bi bi-clock-history me-2 text-primary"></i> My Applications</a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item py-2" href="{{ url_for('profile') }}"><i class="bi bi-person-gear me-2 text-primary"></i> Account Settings</a></li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Log Out</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="btn btn-link text-decoration-none text-dark fw-semibold" href="{{ url_for('login') }}">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm btn-rounded px-3 py-2" href="{{ url_for('register') }}">
+                                Get Started
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages Container -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center" role="alert">
+                        <i class="bi {% if category == 'success' %}bi-check-circle-fill text-success{% elif category == 'danger' or category == 'error' %}bi-exclamation-triangle-fill text-danger{% elif category == 'warning' %}bi-exclamation-circle-fill text-warning{% else %}bi-info-circle-fill text-primary{% endif %} fs-5 me-2"></i>
+                        <div class="flex-grow-1">{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if error_title %}
+            <div class="card form-card text-center my-5 p-5 border-0 shadow-sm">
+                <div class="display-3 text-danger mb-3">
+                    <i class="bi bi-shield-exclamation"></i>
+                </div>
+                <h2 class="fw-bold">{{ error_title }}</h2>
+                <p class="text-muted fs-5 mb-4">{{ error_msg }}</p>
+                <div>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-rounded px-4 py-2">
+                        <i class="bi bi-house me-1"></i> Return to Homepage
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Application Content -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Footer -->
+    <footer>
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-house-door-fill text-primary fs-3"></i>
+                        <span class="fs-4 fw-bold text-white brand-font">HouseRent</span>
+                    </div>
+                    <p class="small text-secondary mb-3">
+                        A modern, transparent house rental management platform connecting tenants with verified property owners directly with zero hidden brokerage.
+                    </p>
+                    <div class="d-flex gap-3 text-secondary fs-5">
+                        <a href="https://github.com" target="_blank" rel="noopener" aria-label="GitHub" class="text-secondary"><i class="bi bi-github"></i></a>
+                        <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn" class="text-secondary"><i class="bi bi-linkedin"></i></a>
+                        <a href="{{ url_for('contact') }}" aria-label="Contact" class="text-secondary"><i class="bi bi-envelope-fill"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg-2">
+                    <h6 class="text-white fw-bold mb-3">Explore</h6>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('houses') }}">Browse Properties</a></li>
+                        <li><a href="{{ url_for('houses', property_type='Apartment') }}">Apartments</a></li>
+                        <li><a href="{{ url_for('houses', property_type='Villa') }}">Villas</a></li>
+                        <li><a href="{{ url_for('houses', property_type='Studio') }}">Studio Flats</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg-2">
+                    <h6 class="text-white fw-bold mb-3">For Owners</h6>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+                        <li><a href="{{ url_for('register', role='owner') }}">List Your Property</a></li>
+                        <li><a href="{{ url_for('login') }}">Owner Sign In</a></li>
+                        <li><a href="{{ url_for('about') }}">Verification Standards</a></li>
+                        <li><a href="{{ url_for('contact') }}">Support & Help</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                    <h6 class="text-white fw-bold mb-3">Popular Localities</h6>
+                    <p class="small text-secondary mb-3">Explore listings in top tech hubs and residential neighborhoods:</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('houses', location='Koramangala') }}" class="badge bg-dark text-secondary text-decoration-none border border-secondary p-2">Koramangala</a>
+                        <a href="{{ url_for('houses', location='Indiranagar') }}" class="badge bg-dark text-secondary text-decoration-none border border-secondary p-2">Indiranagar</a>
+                        <a href="{{ url_for('houses', location='HSR') }}" class="badge bg-dark text-secondary text-decoration-none border border-secondary p-2">HSR Layout</a>
+                        <a href="{{ url_for('houses', location='Whitefield') }}" class="badge bg-dark text-secondary text-decoration-none border border-secondary p-2">Whitefield</a>
+                        <a href="{{ url_for('houses', location='Electronic City') }}" class="badge bg-dark text-secondary text-decoration-none border border-secondary p-2">Electronic City</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                <div>
+                    &copy; 2026 HouseRent Inc. All rights reserved.
+                </div>
+                <div class="text-secondary small">
+                    Engineered with Python Flask, SQLite, Docker, Kubernetes & AWS Serverless
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Platform JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}{{ house.title }} - HouseRent{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('houses') }}" class="text-decoration-none">Properties</a></li>
+            <li class="breadcrumb-item active text-truncate" style="max-width: 300px;" aria-current="page">{{ house.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Left Column: Image, Details, Specifications, Amenities -->
+        <div class="col-lg-8">
+            <div class="card form-card p-0 overflow-hidden mb-4 border-0">
+                <!-- Property Image Banner -->
+                <div style="height: 420px; overflow: hidden; position: relative; background-color: #0f172a;">
+                    <img src="{{ house | property_image }}" alt="{{ house.title }}" class="w-100 h-100 object-fit-cover">
+                    <span class="property-type-tag fs-6 px-3 py-2">
+                        {{ house.property_type }}
+                    </span>
+                    <span class="property-status-badge {% if house.is_available == 1 %}badge-available{% else %}badge-occupied{% endif %} fs-6 px-3 py-2">
+                        {% if house.is_available == 1 %}Available for Lease{% else %}Currently Occupied{% endif %}
+                    </span>
+                </div>
+
+                <div class="p-4">
+                    <!-- Title & Pricing Header -->
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                        <div>
+                            <h2 class="fw-bold mb-1">{{ house.title }}</h2>
+                            <p class="text-muted fs-6 mb-0">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ house.location }}
+                            </p>
+                        </div>
+                        <div class="text-lg-end bg-light p-3 rounded-3">
+                            <span class="fs-2 fw-bold text-primary">₹{{ "{:,.0f}".format(house.rent) }}</span>
+                            <span class="text-muted d-block small">per month</span>
+                            <small class="text-secondary d-block">Deposit: ₹{{ "{:,.0f}".format(house.security_deposit) }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Specifications Grid -->
+                    <div class="row g-3 py-3 border-top border-bottom my-3 text-center">
+                        <div class="col-6 col-sm-3">
+                            <div class="p-2">
+                                <i class="bi bi-door-closed fs-3 text-primary d-block mb-1"></i>
+                                <span class="fw-bold fs-5">{{ house.bedrooms }} BHK</span>
+                                <small class="text-muted d-block">Bedrooms</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 border-start">
+                            <div class="p-2">
+                                <i class="bi bi-droplet fs-3 text-info d-block mb-1"></i>
+                                <span class="fw-bold fs-5">{{ house.bathrooms }}</span>
+                                <small class="text-muted d-block">Bathrooms</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 border-start">
+                            <div class="p-2">
+                                <i class="bi bi-building fs-3 text-secondary d-block mb-1"></i>
+                                <span class="fw-bold fs-6">{{ house.property_type }}</span>
+                                <small class="text-muted d-block">Property Type</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 border-start">
+                            <div class="p-2">
+                                <i class="bi bi-shield-check fs-3 text-success d-block mb-1"></i>
+                                <span class="fw-bold fs-6">{{ house.furnishing }}</span>
+                                <small class="text-muted d-block">Furnishing</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities Section -->
+                    {% if house.amenities %}
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">Amenities & Features</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for amenity in house.amenities.split(',') %}
+                            {% if amenity.strip() %}
+                            <span class="amenity-chip">
+                                <i class="bi bi-check2-circle text-primary"></i> {{ amenity.strip() }}
+                            </span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-2">About This Property</h5>
+                        <p class="text-secondary lh-lg mb-0" style="white-space: pre-line;">{{ house.description }}</p>
+                    </div>
+
+                    <!-- Landlord / Property Manager Card -->
+                    <div class="p-4 rounded-3 border bg-light d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fs-3" style="width: 56px; height: 56px;">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong class="fs-6">{{ house.owner_name }}</strong>
+                                    <span class="badge bg-success-subtle text-success small"><i class="bi bi-patch-check-fill"></i> Verified Owner</span>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <span><i class="bi bi-envelope me-1"></i> {{ house.owner_email }}</span>
+                                    {% if house.owner_phone %}
+                                    <span class="ms-3"><i class="bi bi-telephone me-1"></i> {{ house.owner_phone }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if current_user.is_authenticated and current_user.is_renter %}
+                        <form action="{{ url_for('toggle_save_property', house_id=house.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="btn btn-outline-primary btn-rounded btn-sm px-3">
+                                <i class="bi {% if is_saved %}bi-bookmark-fill text-danger{% else %}bi-bookmark{% endif %} me-1"></i>
+                                {% if is_saved %}Saved to Favorites{% else %}Save Property{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Inquiry Submission / Management Box -->
+        <div class="col-lg-4">
+            <div class="form-card sticky-top" style="top: 90px;">
+                <h4 class="fw-bold mb-3">Rental Application</h4>
+
+                {% if house.is_available != 1 %}
+                    <div class="alert alert-secondary text-center mb-0" role="alert">
+                        <i class="bi bi-door-closed fs-3 d-block mb-2 text-secondary"></i>
+                        <h6 class="fw-bold mb-1">Property Currently Occupied</h6>
+                        <p class="small mb-0">This listing has been leased out. Please explore other available homes.</p>
+                        <div class="mt-3">
+                            <a href="{{ url_for('houses') }}" class="btn btn-outline-primary btn-rounded btn-sm w-100">
+                                Browse Other Properties
+                            </a>
+                        </div>
+                    </div>
+
+                {% elif not current_user.is_authenticated %}
+                    <div class="alert alert-info py-3 mb-3 border-0">
+                        <i class="bi bi-info-circle me-1"></i> Log in as a tenant/renter to submit an inquiry for this property.
+                    </div>
+                    <a href="{{ url_for('login', next=request.path) }}" class="btn btn-primary w-100 btn-rounded py-2 fw-semibold mb-2">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Apply
+                    </a>
+                    <a href="{{ url_for('register', role='renter') }}" class="btn btn-outline-secondary w-100 btn-rounded py-2 small">
+                        Create Free Renter Account
+                    </a>
+
+                {% elif current_user.is_admin or current_user.id == house.created_by %}
+                    <div class="alert alert-warning py-3 mb-3 border-0">
+                        <i class="bi bi-shield-lock me-1"></i> You have management privileges for this property listing.
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{{ url_for('edit_house', house_id=house.id) }}" class="btn btn-warning text-white w-100 btn-rounded py-2 fw-semibold">
+                            <i class="bi bi-pencil me-1"></i> Edit Listing Details
+                        </a>
+                        <form action="{{ url_for('toggle_house_availability', house_id=house.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="btn btn-outline-secondary w-100 btn-rounded py-2">
+                                <i class="bi bi-toggle2-on me-1"></i> Toggle Availability
+                            </button>
+                        </form>
+                        <form action="{{ url_for('delete_house', house_id=house.id) }}" method="POST" class="delete-confirm-form" data-confirm-message="Are you sure you want to permanently delete this listing?">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="btn btn-outline-danger w-100 btn-rounded py-2">
+                                <i class="bi bi-trash me-1"></i> Delete Listing
+                            </button>
+                        </form>
+                    </div>
+
+                {% elif existing_request %}
+                    <div class="p-3 border rounded-3 bg-light text-center mb-3">
+                        <span class="status-pill status-{{ existing_request.status.lower() }} fs-6 px-3 py-1 mb-2">
+                            Status: {{ existing_request.status }}
+                        </span>
+                        <p class="small text-muted mt-2 mb-1">
+                            Application submitted for move-in on <strong>{{ existing_request.move_in_date }}</strong> ({{ existing_request.duration_months }} months).
+                        </p>
+                        {% if existing_request.status == 'Approved' %}
+                        <div class="alert alert-success py-2 px-3 small mt-2 mb-0">
+                            <i class="bi bi-check-circle-fill me-1"></i> Approved! The landlord will contact you directly.
+                        </div>
+                        {% endif %}
+                        <a href="{{ url_for('my_requests') }}" class="btn btn-outline-primary btn-rounded btn-sm mt-3 w-100">
+                            View in Rental Portal &rarr;
+                        </a>
+                    </div>
+
+                {% else %}
+                    <!-- Inquiry Submission Form -->
+                    <form action="{{ url_for('submit_rental_request', house_id=house.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                        <div class="mb-3">
+                            <label class="form-label small" for="move_in_date">Intended Move-In Date *</label>
+                            <input type="date" id="move_in_date" name="move_in_date" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small" for="duration_months">Lease Duration *</label>
+                            <select id="duration_months" name="duration_months" class="form-select" required>
+                                <option value="6">6 Months</option>
+                                <option value="11" selected>11 Months (Standard Agreement)</option>
+                                <option value="12">12 Months (1 Year)</option>
+                                <option value="24">24 Months (2 Years)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small" for="message">Message to Owner (Optional)</label>
+                            <textarea id="message" name="message" class="form-control" rows="3" placeholder="Share your employment background, family/bachelor status, or move-in queries..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 btn-rounded py-2 fw-semibold">
+                            <i class="bi bi-send me-1"></i> Submit Application
+                        </button>
+                    </form>
+                {% endif %}
+
+                <!-- Guarantee badges -->
+                <div class="mt-4 pt-3 border-top small text-muted">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-shield-check text-success fs-5"></i>
+                        <span>Zero brokerage fee guaranteed</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-file-earmark-check text-success fs-5"></i>
+                        <span>Transparent lease & deposit terms</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-dots text-success fs-5"></i>
+                        <span>Direct landlord communication</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

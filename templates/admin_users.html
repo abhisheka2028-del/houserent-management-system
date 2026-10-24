@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin Portal - HouseRent{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">User & Role Management</h2>
+            <p class="text-muted mb-0">Inspect user accounts, assign system roles, and manage access privileges</p>
+        </div>
+        <div>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-rounded btn-sm px-3">
+                <i class="bi bi-speedometer2 me-1"></i> Return to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters & Search Bar -->
+    <div class="filter-card mb-4">
+        <form method="GET" action="{{ url_for('admin_users') }}" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="search-user"><i class="bi bi-search me-1 text-primary"></i> Search Users</label>
+                <input type="text" id="search-user" name="q" class="form-control" placeholder="Search by name, username, or email..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="role-filter"><i class="bi bi-funnel me-1 text-primary"></i> Filter by Role</label>
+                <select id="role-filter" name="role" class="form-select">
+                    <option value="all" {% if current_role == 'all' %}selected{% endif %}>All Roles</option>
+                    <option value="admin" {% if current_role == 'admin' %}selected{% endif %}>Administrators</option>
+                    <option value="owner" {% if current_role == 'owner' %}selected{% endif %}>Property Owners (Landlords)</option>
+                    <option value="renter" {% if current_role in ('renter', 'tenant') %}selected{% endif %}>Renters (Tenants)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-rounded flex-grow-1 py-2 fw-semibold">
+                    Filter Users
+                </button>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary btn-rounded px-3 py-2" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table Card -->
+    <div class="card form-card p-0 border-0">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Registered User Accounts ({{ users|length }})</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th class="ps-3">ID</th>
+                        <th>User Profile</th>
+                        <th>Contact</th>
+                        <th>Current Role</th>
+                        <th>Registered Date</th>
+                        <th class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td class="ps-3 fw-bold">#{{ user.id }}</td>
+                        <td>
+                            <strong class="d-block">{{ user.full_name }}</strong>
+                            <small class="text-muted">@{{ user.username }}</small>
+                        </td>
+                        <td>
+                            <div><i class="bi bi-envelope text-muted me-1"></i> {{ user.email }}</div>
+                            {% if user.phone %}
+                            <small class="text-muted"><i class="bi bi-telephone me-1"></i> {{ user.phone }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.role == 'admin' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Administrator</span>
+                            {% elif user.role == 'owner' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Property Owner</span>
+                            {% else %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Renter</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ user.created_at[:10] }}</small>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <!-- Role Update Dropdown Form -->
+                                {% if user.id != current_user.id %}
+                                <form action="{{ url_for('update_user_role', target_user_id=user.id) }}" method="POST" class="d-inline-flex gap-1">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <select name="role" class="form-select form-select-sm" style="width: 120px;">
+                                        <option value="renter" {% if user.role in ('renter', 'tenant') %}selected{% endif %}>Renter</option>
+                                        <option value="owner" {% if user.role == 'owner' %}selected{% endif %}>Owner</option>
+                                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary btn-rounded px-2" title="Save Role">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Delete User Form -->
+                                <form action="{{ url_for('delete_user', target_user_id=user.id) }}" method="POST" class="d-inline delete-confirm-form" data-confirm-message="Are you sure you want to permanently delete user '{{ user.username }}'? All their associated listings and inquiries will also be deleted.">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-rounded px-2" title="Delete User">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-light text-muted border">Active Session</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-2 d-block mb-2"></i>
+                            No users matched your filter query.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

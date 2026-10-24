@@ -1,0 +1,4 @@
+# Dependencies for AWS Lambda Serverless Microservices
+# Note: boto3 and standard Python libraries are included in the AWS Lambda runtime environment.
+boto3>=1.34.0
+pytest>=8.0.0

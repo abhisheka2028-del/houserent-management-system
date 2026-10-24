@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}My Rental Portal - HouseRent{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Renter Portal</h2>
+            <p class="text-muted mb-0">Track your rental applications, manage saved properties, and explore recommendations</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('houses') }}" class="btn btn-primary btn-rounded btn-sm px-3">
+                <i class="bi bi-search me-1"></i> Browse All Properties
+            </a>
+            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary btn-rounded btn-sm px-3">
+                <i class="bi bi-person me-1"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Metrics Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number">{{ stats.total_requests }}</div>
+                    <div class="metric-label">Total Inquiries</div>
+                </div>
+                <div class="metric-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-warning">{{ stats.pending }}</div>
+                    <div class="metric-label">Under Review</div>
+                </div>
+                <div class="metric-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-success">{{ stats.approved }}</div>
+                    <div class="metric-label">Approved</div>
+                </div>
+                <div class="metric-icon bg-success-subtle text-success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-info">{{ stats.saved_count }}</div>
+                    <div class="metric-label">Saved Homes</div>
+                </div>
+                <div class="metric-icon bg-info-subtle text-info">
+                    <i class="bi bi-bookmark-heart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4 border-bottom" id="renterTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests-pane" type="button" role="tab">
+                <i class="bi bi-inbox me-1"></i> My Rental Applications ({{ stats.total_requests }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved-pane" type="button" role="tab">
+                <i class="bi bi-bookmark-check me-1"></i> Saved Properties ({{ stats.saved_count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="recommended-tab" data-bs-toggle="tab" data-bs-target="#recommended-pane" type="button" role="tab">
+                <i class="bi bi-stars me-1"></i> Recommended For You
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="renterTabContent">
+        <!-- Applications Tab -->
+        <div class="tab-pane fade show active" id="requests-pane" role="tabpanel">
+            {% if requests %}
+            <div class="row g-4">
+                {% for req in requests %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="property-card">
+                        <div class="property-image-wrapper" style="height: 180px;">
+                            <img src="{{ req | property_image }}" alt="{{ req.house_title }}">
+                            <span class="status-pill status-{{ req.status.lower() }} position-absolute top-0 end-0 m-3 shadow-sm">
+                                <i class="bi {% if req.status == 'Approved' %}bi-check2{% elif req.status == 'Rejected' %}bi-x{% else %}bi-clock{% endif %}"></i>
+                                {{ req.status }}
+                            </span>
+                        </div>
+                        <div class="property-body">
+                            <h5 class="fw-bold mb-1 text-truncate">
+                                <a href="{{ url_for('house_detail', house_id=req.house_id) }}" class="text-decoration-none text-dark">
+                                    {{ req.house_title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ req.house_location }}</p>
+
+                            <div class="bg-light p-3 rounded-3 small mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Monthly Rent:</span>
+                                    <strong class="text-primary">₹{{ "{:,.0f}".format(req.house_rent) }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Target Move-In:</span>
+                                    <strong>{{ req.move_in_date }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Lease Period:</span>
+                                    <strong>{{ req.duration_months }} Months</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Applied On:</span>
+                                    <span>{{ req.created_at[:10] }}</span>
+                                </div>
+                            </div>
+
+                            {% if req.status == 'Approved' %}
+                            <div class="alert alert-success py-2 px-3 small mb-3 border-0">
+                                <div class="fw-bold mb-1"><i class="bi bi-check-circle-fill me-1"></i> Landlord Contact Details</div>
+                                <div><strong>Owner:</strong> {{ req.owner_name }}</div>
+                                <div><strong>Email:</strong> <a href="mailto:{{ req.owner_email }}" class="text-success">{{ req.owner_email }}</a></div>
+                                {% if req.owner_phone %}
+                                <div><strong>Phone:</strong> <a href="tel:{{ req.owner_phone }}" class="text-success">{{ req.owner_phone }}</a></div>
+                                {% endif %}
+                                {% if req.owner_notes %}
+                                <div class="mt-1 pt-1 border-top border-success-subtle">
+                                    <em>"{{ req.owner_notes }}"</em>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% elif req.status == 'Pending' %}
+                            <div class="alert alert-warning py-2 px-3 small mb-3 border-0">
+                                <i class="bi bi-hourglass-split me-1"></i> Application is under review by property owner.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-danger py-2 px-3 small mb-3 border-0">
+                                <i class="bi bi-x-circle-fill me-1"></i> Application was not accepted for this listing.
+                                {% if req.owner_notes %}
+                                <div class="small mt-1"><em>Reason: {{ req.owner_notes }}</em></div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <div class="mt-auto pt-2 border-top">
+                                <a href="{{ url_for('house_detail', house_id=req.house_id) }}" class="btn btn-outline-primary btn-rounded btn-sm w-100">
+                                    View Property Listing
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card form-card text-center p-5 border-0">
+                <i class="bi bi-journal-x text-muted display-4 mb-3"></i>
+                <h4 class="fw-bold">No Rental Applications Submitted</h4>
+                <p class="text-muted mb-4">You have not submitted an application for any rental listings yet.</p>
+                <div>
+                    <a href="{{ url_for('houses') }}" class="btn btn-primary btn-rounded px-4 py-2">
+                        Explore Verified Properties
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Saved Properties Tab -->
+        <div class="tab-pane fade" id="saved-pane" role="tabpanel">
+            {% if saved_houses %}
+            <div class="row g-4">
+                {% for house in saved_houses %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="property-card">
+                        <div class="property-image-wrapper">
+                            <img src="{{ house | property_image }}" alt="{{ house.title }}">
+                            <span class="property-type-tag">{{ house.property_type }}</span>
+                            <span class="property-status-badge {% if house.is_available == 1 %}badge-available{% else %}badge-occupied{% endif %}">
+                                {% if house.is_available == 1 %}Available{% else %}Occupied{% endif %}
+                            </span>
+                            <div class="property-price-bar">
+                                ₹{{ "{:,.0f}".format(house.rent) }} <small>/ month</small>
+                            </div>
+                        </div>
+                        <div class="property-body">
+                            <h5 class="fw-bold mb-1 text-truncate" title="{{ house.title }}">
+                                <a href="{{ url_for('house_detail', house_id=house.id) }}" class="text-decoration-none text-dark">
+                                    {{ house.title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ house.location }}</p>
+
+                            <div class="property-specs">
+                                <div class="property-spec-item"><i class="bi bi-door-closed"></i> {{ house.bedrooms }} Beds</div>
+                                <div class="property-spec-item"><i class="bi bi-droplet"></i> {{ house.bathrooms }} Baths</div>
+                                <div class="property-spec-item"><i class="bi bi-shield-check"></i> {{ house.furnishing }}</div>
+                            </div>
+
+                            <div class="mt-auto pt-3 d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('house_detail', house_id=house.id) }}" class="btn btn-primary btn-rounded btn-sm px-3">
+                                    View Details
+                                </a>
+                                <form action="{{ url_for('toggle_save_property', house_id=house.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle" title="Remove from saved">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card form-card text-center p-5 border-0">
+                <i class="bi bi-bookmark-x text-muted display-4 mb-3"></i>
+                <h4 class="fw-bold">No Saved Properties</h4>
+                <p class="text-muted mb-4">When browsing houses, click the bookmark icon to save properties you like for quick reference.</p>
+                <div>
+                    <a href="{{ url_for('houses') }}" class="btn btn-primary btn-rounded px-4 py-2">
+                        Browse Properties Now
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recommended Tab -->
+        <div class="tab-pane fade" id="recommended-pane" role="tabpanel">
+            {% if recommended_houses %}
+            <div class="row g-4">
+                {% for house in recommended_houses %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="property-card">
+                        <div class="property-image-wrapper">
+                            <img src="{{ house | property_image }}" alt="{{ house.title }}">
+                            <span class="property-type-tag">{{ house.property_type }}</span>
+                            <span class="property-status-badge badge-available">Available</span>
+                            <div class="property-price-bar">
+                                ₹{{ "{:,.0f}".format(house.rent) }} <small>/ mo</small>
+                            </div>
+                        </div>
+                        <div class="property-body">
+                            <h5 class="fw-bold mb-1 text-truncate" title="{{ house.title }}">
+                                <a href="{{ url_for('house_detail', house_id=house.id) }}" class="text-decoration-none text-dark">
+                                    {{ house.title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ house.location }}</p>
+
+                            <div class="property-specs">
+                                <div class="property-spec-item"><i class="bi bi-door-closed"></i> {{ house.bedrooms }} BHK</div>
+                                <div class="property-spec-item"><i class="bi bi-droplet"></i> {{ house.bathrooms }} Bath</div>
+                                <div class="property-spec-item"><i class="bi bi-cash"></i> ₹{{ "{:,.0f}".format(house.security_deposit) }} Dep.</div>
+                            </div>
+
+                            <div class="mt-auto pt-3 d-flex justify-content-between align-items-center">
+                                <small class="text-muted">By {{ house.owner_name }}</small>
+                                <a href="{{ url_for('house_detail', house_id=house.id) }}" class="btn btn-outline-primary btn-rounded btn-sm px-3">
+                                    Apply / Details &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card form-card text-center p-5 border-0">
+                <i class="bi bi-check2-circle text-success display-4 mb-3"></i>
+                <h4 class="fw-bold">All Available Properties Explored</h4>
+                <p class="text-muted mb-3">You have submitted inquiries or reviewed all currently listed homes.</p>
+                <a href="{{ url_for('houses') }}" class="btn btn-primary btn-rounded px-4 py-2">View Full Catalog</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

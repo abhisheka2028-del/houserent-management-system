@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Rental Properties - HouseRent{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0">Browse Rental Listings</h2>
+            <p class="text-muted mb-0">Explore verified homes with transparent rent and deposit terms</p>
+        </div>
+        {% if current_user.is_authenticated and (current_user.is_owner or current_user.is_admin) %}
+        <a href="{{ url_for('add_house') }}" class="btn btn-primary btn-rounded btn-sm px-3">
+            <i class="bi bi-plus-circle me-1"></i> Add Property Listing
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Multi-criteria Filter Bar -->
+    <div class="filter-card">
+        <form method="GET" action="{{ url_for('houses') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label" for="filter-loc"><i class="bi bi-geo-alt text-primary me-1"></i> Locality / City</label>
+                <input type="text" id="filter-loc" name="location" class="form-control" placeholder="e.g. Koramangala" value="{{ filters.location if filters else '' }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label" for="filter-type"><i class="bi bi-building text-primary me-1"></i> Type</label>
+                <select id="filter-type" name="property_type" class="form-select">
+                    <option value="" {% if not filters or not filters.property_type %}selected{% endif %}>All Types</option>
+                    <option value="Apartment" {% if filters and filters.property_type == 'Apartment' %}selected{% endif %}>Apartment</option>
+                    <option value="Villa" {% if filters and filters.property_type == 'Villa' %}selected{% endif %}>Villa</option>
+                    <option value="Studio" {% if filters and filters.property_type == 'Studio' %}selected{% endif %}>Studio Flat</option>
+                    <option value="Penthouse" {% if filters and filters.property_type == 'Penthouse' %}selected{% endif %}>Penthouse</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label" for="filter-beds"><i class="bi bi-door-closed text-primary me-1"></i> Bedrooms</label>
+                <select id="filter-beds" name="bedrooms" class="form-select">
+                    <option value="any" {% if not filters or filters.bedrooms == 'any' %}selected{% endif %}>Any BHK</option>
+                    <option value="1" {% if filters and filters.bedrooms == '1' %}selected{% endif %}>1 BHK</option>
+                    <option value="2" {% if filters and filters.bedrooms == '2' %}selected{% endif %}>2 BHK</option>
+                    <option value="3" {% if filters and filters.bedrooms == '3' %}selected{% endif %}>3 BHK</option>
+                    <option value="4" {% if filters and filters.bedrooms == '4' %}selected{% endif %}>4+ BHK</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label" for="filter-furnish"><i class="bi bi-shield-check text-primary me-1"></i> Furnishing</label>
+                <select id="filter-furnish" name="furnishing" class="form-select">
+                    <option value="" {% if not filters or not filters.furnishing %}selected{% endif %}>Any Furnishing</option>
+                    <option value="Furnished" {% if filters and filters.furnishing == 'Furnished' %}selected{% endif %}>Furnished</option>
+                    <option value="Semi-Furnished" {% if filters and filters.furnishing == 'Semi-Furnished' %}selected{% endif %}>Semi-Furnished</option>
+                    <option value="Unfurnished" {% if filters and filters.furnishing == 'Unfurnished' %}selected{% endif %}>Unfurnished</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label" for="filter-rent"><i class="bi bi-currency-rupee text-primary me-1"></i> Max Rent (₹/mo)</label>
+                <input type="number" id="filter-rent" name="max_rent" class="form-control" placeholder="e.g. 35000" value="{{ filters.max_rent if filters else '' }}">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label" for="filter-avail"><i class="bi bi-toggle2-on text-primary me-1"></i> Status</label>
+                <select id="filter-avail" name="availability" class="form-select">
+                    <option value="all" {% if not filters or filters.availability == 'all' %}selected{% endif %}>All Listings</option>
+                    <option value="available" {% if filters and filters.availability == 'available' %}selected{% endif %}>Available Only</option>
+                    <option value="rented" {% if filters and filters.availability == 'rented' %}selected{% endif %}>Occupied Only</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label" for="filter-sort"><i class="bi bi-arrow-down-up text-primary me-1"></i> Sort By</label>
+                <select id="filter-sort" name="sort" class="form-select">
+                    <option value="newest" {% if not filters or filters.sort == 'newest' %}selected{% endif %}>Newest Listings</option>
+                    <option value="price_asc" {% if filters and filters.sort == 'price_asc' %}selected{% endif %}>Rent: Low to High</option>
+                    <option value="price_desc" {% if filters and filters.sort == 'price_desc' %}selected{% endif %}>Rent: High to Low</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary btn-rounded flex-grow-1 py-2 fw-semibold">
+                    <i class="bi bi-funnel me-1"></i> Apply Filters
+                </button>
+                <a href="{{ url_for('houses') }}" class="btn btn-outline-secondary btn-rounded px-3 py-2" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="d-flex justify-content-between align-items-center mb-3 text-muted small">
+        <span>Showing <strong>{{ houses|length }}</strong> properties</span>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="row g-4">
+        {% for house in houses %}
+        <div class="col-md-6 col-lg-4">
+            <div class="property-card">
+                <div class="property-image-wrapper">
+                    <img src="{{ house | property_image }}" alt="{{ house.title }}" loading="lazy">
+                    <span class="property-type-tag">{{ house.property_type }}</span>
+                    <span class="property-status-badge {% if house.is_available == 1 %}badge-available{% else %}badge-occupied{% endif %}">
+                        {% if house.is_available == 1 %}Available{% else %}Occupied{% endif %}
+                    </span>
+                    <div class="property-price-bar">
+                        ₹{{ "{:,.0f}".format(house.rent) }} <small>/ month</small>
+                    </div>
+
+                    {% if current_user.is_authenticated and current_user.is_renter %}
+                    <form action="{{ url_for('toggle_save_property', house_id=house.id) }}" method="POST" class="position-absolute bottom-0 end-0 m-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-sm btn-light rounded-circle shadow-sm" title="{% if house.id in saved_house_ids %}Remove from saved{% else %}Save property{% endif %}">
+                            <i class="bi {% if house.id in saved_house_ids %}bi-bookmark-fill text-danger{% else %}bi-bookmark{% endif %}"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <div class="property-body">
+                    <h5 class="fw-bold mb-1 text-truncate" title="{{ house.title }}">
+                        <a href="{{ url_for('house_detail', house_id=house.id) }}" class="text-decoration-none text-dark">
+                            {{ house.title }}
+                        </a>
+                    </h5>
+                    <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ house.location }}</p>
+
+                    <div class="property-specs">
+                        <div class="property-spec-item"><i class="bi bi-door-closed"></i> {{ house.bedrooms }} BHK</div>
+                        <div class="property-spec-item"><i class="bi bi-droplet"></i> {{ house.bathrooms }} Baths</div>
+                        <div class="property-spec-item"><i class="bi bi-shield-check"></i> {{ house.furnishing }}</div>
+                    </div>
+
+                    <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px;">
+                        {{ house.description }}
+                    </p>
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('house_detail', house_id=house.id) }}" class="btn btn-primary btn-rounded btn-sm px-3">
+                            View Details
+                        </a>
+
+                        {% if current_user.is_authenticated and (current_user.is_admin or current_user.id == house.created_by) %}
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('edit_house', house_id=house.id) }}" class="btn btn-sm btn-outline-secondary rounded-circle" title="Edit Listing">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form action="{{ url_for('delete_house', house_id=house.id) }}" method="POST" class="d-inline delete-confirm-form" data-confirm-message="Are you sure you want to permanently delete this listing?">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Delete Listing">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="card form-card p-5 border-0">
+                <i class="bi bi-search text-muted display-4 mb-3"></i>
+                <h4 class="fw-bold">No Properties Match Your Criteria</h4>
+                <p class="text-muted mb-4">Try clearing or broadening your location query, bedroom count, or budget range.</p>
+                <div>
+                    <a href="{{ url_for('houses') }}" class="btn btn-primary btn-rounded px-4 py-2">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Clear All Filters
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,504 @@
+/* ==========================================================================
+   HouseRent - Professional Real Estate Platform Design System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary: #1d4ed8;
+    --primary-dark: #1e3a8a;
+    --primary-light: #eff6ff;
+    --primary-subtle: #dbeafe;
+    --secondary: #0f172a;
+    --accent: #0284c7;
+    --success: #059669;
+    --success-light: #ecfdf5;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --bg-body: #f8fafc;
+    --bg-surface: #ffffff;
+    --border-color: #e2e8f0;
+    --border-light: #f1f5f9;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+    --shadow-pop: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-main);
+    background-color: var(--bg-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+/* -------------------------------------------------------------
+   Navigation Bar
+------------------------------------------------------------- */
+.navbar-custom {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.85rem 0;
+    transition: all 0.2s ease;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: var(--primary-dark) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.navbar-brand i {
+    color: var(--primary);
+}
+
+.nav-link {
+    font-weight: 500;
+    font-size: 0.925rem;
+    color: #334155 !important;
+    padding: 0.5rem 0.85rem !important;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+    background-color: var(--primary-light);
+}
+
+.nav-link.active {
+    color: var(--primary) !important;
+    font-weight: 600;
+}
+
+/* -------------------------------------------------------------
+   Hero Banner & Search Section
+------------------------------------------------------------- */
+.hero-section {
+    background: radial-gradient(circle at top right, #1e3a8a, #0f172a);
+    color: #ffffff;
+    padding: 5rem 0 4.5rem;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: #cbd5e1;
+    max-width: 680px;
+}
+
+.hero-search-card {
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop);
+    padding: 1.5rem;
+    margin-top: 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* -------------------------------------------------------------
+   Property Cards
+------------------------------------------------------------- */
+.property-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.property-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: #cbd5e1;
+}
+
+.property-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    background-color: #e2e8f0;
+}
+
+.property-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.property-card:hover .property-image-wrapper img {
+    transform: scale(1.05);
+}
+
+.property-type-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(15, 23, 42, 0.82);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.28rem 0.65rem;
+    border-radius: var(--radius-sm);
+    backdrop-filter: blur(4px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.property-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.28rem 0.65rem;
+    border-radius: 50px;
+}
+
+.badge-available {
+    background-color: var(--success);
+    color: #ffffff;
+}
+
+.badge-occupied {
+    background-color: #64748b;
+    color: #ffffff;
+}
+
+.property-price-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(15, 23, 42, 0.88);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(6px);
+}
+
+.property-price-bar small {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #cbd5e1;
+}
+
+.property-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.property-specs {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    margin: 0.5rem 0;
+    border-top: 1px dashed var(--border-color);
+    border-bottom: 1px dashed var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.property-spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.property-spec-item i {
+    color: var(--primary);
+}
+
+/* -------------------------------------------------------------
+   Metric Counter Cards
+------------------------------------------------------------- */
+.metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.metric-number {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-main);
+}
+
+.metric-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+/* -------------------------------------------------------------
+   Status Pills
+------------------------------------------------------------- */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 50px;
+    letter-spacing: 0.2px;
+}
+
+.status-pending {
+    background-color: var(--warning-light);
+    color: var(--warning);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.status-approved {
+    background-color: var(--success-light);
+    color: var(--success);
+    border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.status-rejected {
+    background-color: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* -------------------------------------------------------------
+   Filter Box & Form Card
+------------------------------------------------------------- */
+.filter-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 2.25rem;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #334155;
+    margin-bottom: 0.4rem;
+}
+
+.form-control, .form-select {
+    border-radius: var(--radius-sm);
+    border: 1px solid #cbd5e1;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.925rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+.input-group-text {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+    color: #64748b;
+}
+
+/* -------------------------------------------------------------
+   Tables & Lists
+------------------------------------------------------------- */
+.custom-table {
+    margin-bottom: 0;
+}
+
+.custom-table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.custom-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.custom-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* -------------------------------------------------------------
+   Buttons
+------------------------------------------------------------- */
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+}
+
+.btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+.btn-rounded {
+    border-radius: 50px;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+}
+
+/* -------------------------------------------------------------
+   Amenities Chips
+------------------------------------------------------------- */
+.amenity-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: #f1f5f9;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e2e8f0;
+}
+
+/* -------------------------------------------------------------
+   Footer
+------------------------------------------------------------- */
+footer {
+    background-color: #0f172a;
+    color: #94a3b8;
+    margin-top: auto;
+    padding: 3.5rem 0 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+footer a {
+    color: #cbd5e1;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+footer a:hover {
+    color: #ffffff;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    font-size: 0.85rem;
+}
+
+/* -------------------------------------------------------------
+   Password Toggle
+------------------------------------------------------------- */
+.password-toggle-btn {
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: #64748b;
+}
+
+.password-toggle-btn:hover {
+    color: var(--primary);
+}

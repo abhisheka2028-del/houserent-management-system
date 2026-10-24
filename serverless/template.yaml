@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  HouseRent Serverless Microservice Architecture
+  Demonstrates AWS Lambda, API Gateway, and S3 Event Triggers for College Microproject Module 5.
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: python3.10
+    Environment:
+      Variables:
+        STAGE: dev
+        APP_NAME: HouseRentServerless
+
+Resources:
+  # -------------------------------------------------------------
+  # S3 Bucket for Storing House Documents & Images
+  # -------------------------------------------------------------
+  HouseRentStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "houserent-storage-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt S3DocumentProcessorFunction.Arn
+
+  # -------------------------------------------------------------
+  # API Gateway REST API
+  # -------------------------------------------------------------
+  HouseRentApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key'"
+        AllowOrigin: "'*'"
+
+  # -------------------------------------------------------------
+  # Lambda Function A & B: API Gateway HTTP Handler
+  # -------------------------------------------------------------
+  HouseRentApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: lambda_function.lambda_handler
+      Description: Validates rental requests and serves available house listings
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        AvailabilityEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HouseRentApi
+            Path: /houses/availability
+            Method: GET
+        RentalRequestEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HouseRentApi
+            Path: /rental-request
+            Method: POST
+
+  # -------------------------------------------------------------
+  # Lambda Event-Driven Function: S3 ObjectCreated Processor
+  # -------------------------------------------------------------
+  S3DocumentProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: lambda_function.lambda_handler
+      Description: Event-driven trigger that logs metadata for uploaded house documents
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Sub "houserent-storage-${AWS::AccountId}-${AWS::Region}"
+
+  # Permission allowing S3 to invoke the Lambda function
+  S3BucketLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt S3DocumentProcessorFunction.Arn
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub "arn:aws:s3:::houserent-storage-${AWS::AccountId}-${AWS::Region}"
+
+Outputs:
+  ApiEndpointUrl:
+    Description: "Public API Gateway Invocation URL for HouseRent microservices"
+    Value: !Sub "https://${HouseRentApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+
+  AvailabilityUrl:
+    Description: "Direct GET URL for house availability endpoint"
+    Value: !Sub "https://${HouseRentApi}.execute-api.${AWS::Region}.amazonaws.com/prod/houses/availability"
+
+  RentalRequestUrl:
+    Description: "Direct POST URL for rental inquiry endpoint"
+    Value: !Sub "https://${HouseRentApi}.execute-api.${AWS::Region}.amazonaws.com/prod/rental-request"
+
+  StorageBucketName:
+    Description: "S3 Bucket created for event-driven document uploads"
+    Value: !Ref HouseRentStorageBucket

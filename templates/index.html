@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}HouseRent - Find Verified Houses & Apartments for Rent{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center position-relative" style="z-index: 2;">
+        <span class="badge bg-primary-subtle text-white border border-primary px-3 py-2 rounded-pill mb-3 fw-normal" style="background-color: rgba(29, 78, 216, 0.4) !important;">
+            <i class="bi bi-shield-check me-1"></i> Verified Rental Properties &bull; Zero Brokerage
+        </span>
+        <h1 class="hero-title mx-auto" style="max-width: 850px;">
+            Find Your Ideal Rental Home with Transparent Pricing
+        </h1>
+        <p class="hero-subtitle mx-auto mb-4">
+            Connect directly with verified property owners. Search apartments, independent houses, and villas with upfront rent and security deposit details.
+        </p>
+
+        <!-- Integrated Search Card -->
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="hero-search-card text-start">
+                    <form action="{{ url_for('houses') }}" method="GET" class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Locality or City</label>
+                            <input type="text" name="location" class="form-control" placeholder="e.g. Koramangala, Indiranagar...">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-building text-primary me-1"></i> Type</label>
+                            <select name="property_type" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="Villa">Villa</option>
+                                <option value="Studio">Studio</option>
+                                <option value="Penthouse">Penthouse</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-door-closed text-info me-1"></i> Bedrooms</label>
+                            <select name="bedrooms" class="form-select">
+                                <option value="any">Any BHK</option>
+                                <option value="1">1 BHK</option>
+                                <option value="2">2 BHK</option>
+                                <option value="3">3 BHK</option>
+                                <option value="4">4+ BHK</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-currency-rupee text-success me-1"></i> Max Rent</label>
+                            <input type="number" name="max_rent" class="form-control" placeholder="Max ₹">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100 btn-rounded py-2 fw-semibold" style="margin-top: 1.5rem;">
+                                <i class="bi bi-search me-1"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Metrics Row Sourced from Database -->
+<div class="container my-5">
+    <div class="row g-3">
+        <div class="col-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-primary">{{ stats.available }}</div>
+                    <div class="metric-label">Available Homes</div>
+                </div>
+                <div class="metric-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-house-check"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-secondary">{{ stats.total }}</div>
+                    <div class="metric-label">Total Listings</div>
+                </div>
+                <div class="metric-icon bg-secondary-subtle text-secondary">
+                    <i class="bi bi-buildings"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-success">{{ stats.tenants }}</div>
+                    <div class="metric-label">Active Renters</div>
+                </div>
+                <div class="metric-icon bg-success-subtle text-success">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-number text-info">{{ stats.owners }}</div>
+                    <div class="metric-label">Verified Owners</div>
+                </div>
+                <div class="metric-icon bg-info-subtle text-info">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Properties Section -->
+<section class="container mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
+        <div>
+            <span class="text-primary fw-bold text-uppercase small letter-spacing-1">Handpicked Homes</span>
+            <h2 class="fw-bold mb-1">Featured Available Properties</h2>
+            <p class="text-muted mb-0">Newly listed and ready for immediate move-in across key residential hubs</p>
+        </div>
+        <a href="{{ url_for('houses') }}" class="btn btn-outline-primary btn-rounded btn-sm px-3">
+            View All Properties <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for house in houses %}
+        <div class="col-md-6 col-lg-4">
+            <div class="property-card">
+                <div class="property-image-wrapper">
+                    <img src="{{ house | property_image }}" alt="{{ house.title }}" loading="lazy">
+                    <span class="property-type-tag">{{ house.property_type }}</span>
+                    <span class="property-status-badge badge-available">
+                        Available
+                    </span>
+                    <div class="property-price-bar">
+                        ₹{{ "{:,.0f}".format(house.rent) }} <small>/ month</small>
+                    </div>
+                </div>
+
+                <div class="property-body">
+                    <h5 class="fw-bold mb-1 text-truncate" title="{{ house.title }}">
+                        <a href="{{ url_for('house_detail', house_id=house.id) }}" class="text-decoration-none text-dark">
+                            {{ house.title }}
+                        </a>
+                    </h5>
+                    <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-primary"></i> {{ house.location }}</p>
+
+                    <div class="property-specs">
+                        <div class="property-spec-item">
+                            <i class="bi bi-door-closed"></i> {{ house.bedrooms }} BHK
+                        </div>
+                        <div class="property-spec-item">
+                            <i class="bi bi-droplet"></i> {{ house.bathrooms }} Baths
+                        </div>
+                        <div class="property-spec-item">
+                            <i class="bi bi-shield-check"></i> {{ house.furnishing }}
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px;">
+                        {{ house.description }}
+                    </p>
+
+                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                        <div class="small text-muted">
+                            <i class="bi bi-person-check text-success"></i> Owner: {{ house.owner_name }}
+                        </div>
+                        <a href="{{ url_for('house_detail', house_id=house.id) }}" class="btn btn-primary btn-rounded btn-sm px-3">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="card form-card p-5 border-0">
+                <i class="bi bi-house-slash text-muted display-4 mb-3"></i>
+                <h4 class="fw-bold">No Properties Listed Yet</h4>
+                <p class="text-muted mb-3">There are currently no available rental properties in the system.</p>
+                {% if current_user.is_authenticated and (current_user.is_owner or current_user.is_admin) %}
+                <div>
+                    <a href="{{ url_for('add_house') }}" class="btn btn-primary btn-rounded px-4 py-2">
+                        <i class="bi bi-plus-circle me-1"></i> Add the First Property
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Why Choose HouseRent (Platform Benefits) -->
+<section class="bg-white py-5 border-top border-bottom">
+    <div class="container py-2">
+        <div class="text-center mb-5">
+            <span class="text-primary fw-bold text-uppercase small">Transparent & Reliable</span>
+            <h2 class="fw-bold mb-2">Why Rent with HouseRent</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">
+                We simplify the rental journey for both tenants and property owners with direct communication and full transparency.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="p-4 rounded-3 border bg-light h-100">
+                    <div class="p-3 bg-white text-primary rounded-3 d-inline-flex mb-3 shadow-sm fs-4">
+                        <i class="bi bi-patch-check-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Verified Listings</h5>
+                    <p class="small text-muted mb-0">Every property listing is submitted by registered owners with verified specifications and photo records.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="p-4 rounded-3 border bg-light h-100">
+                    <div class="p-3 bg-white text-success rounded-3 d-inline-flex mb-3 shadow-sm fs-4">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Zero Brokerage</h5>
+                    <p class="small text-muted mb-0">No middleman fees or hidden commissions. Deal directly with homeowners from inquiry to move-in.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="p-4 rounded-3 border bg-light h-100">
+                    <div class="p-3 bg-white text-info rounded-3 d-inline-flex mb-3 shadow-sm fs-4">
+                        <i class="bi bi-file-earmark-lock-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Clear Security Deposits</h5>
+                    <p class="small text-muted mb-0">Upfront security deposit and rental lease conditions clearly stated before you submit an application.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="p-4 rounded-3 border bg-light h-100">
+                    <div class="p-3 bg-white text-warning rounded-3 d-inline-flex mb-3 shadow-sm fs-4">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Instant Inquiries</h5>
+                    <p class="small text-muted mb-0">Submit rental inquiries directly from your browser and track landlord approval status in real-time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="container py-5 my-3">
+    <div class="text-center mb-5">
+        <span class="text-primary fw-bold text-uppercase small">Simple Process</span>
+        <h2 class="fw-bold mb-2">How It Works</h2>
+        <p class="text-muted">A streamlined 3-step rental journey for tenants</p>
+    </div>
+
+    <div class="row g-4 text-center">
+        <div class="col-md-4">
+            <div class="p-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 64px; height: 64px; font-size: 1.5rem; font-weight: 700;">
+                    1
+                </div>
+                <h5 class="fw-bold mb-2">Search & Filter</h5>
+                <p class="small text-muted mb-0">Explore properties by locality, bedroom configuration, budget, and furnishing preferences.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 64px; height: 64px; font-size: 1.5rem; font-weight: 700;">
+                    2
+                </div>
+                <h5 class="fw-bold mb-2">Submit Inquiry</h5>
+                <p class="small text-muted mb-0">Specify your intended move-in date and desired lease duration to connect directly with the owner.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 64px; height: 64px; font-size: 1.5rem; font-weight: 700;">
+                    3
+                </div>
+                <h5 class="fw-bold mb-2">Move In</h5>
+                <p class="small text-muted mb-0">Receive owner review and approval, verify terms, and complete move-in arrangements smoothly.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner for Owners -->
+<section class="container mb-5">
+    <div class="p-5 rounded-4 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-8 mb-3 mb-lg-0">
+                <h3 class="fw-bold mb-2">Are You a Property Owner?</h3>
+                <p class="mb-0 text-light" style="max-width: 600px;">
+                    List your apartments or independent houses on HouseRent to reach verified renters with zero platform fees and direct inquiry tracking.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ url_for('register', role='owner') }}" class="btn btn-light btn-rounded px-4 py-2 fw-semibold text-primary">
+                    <i class="bi bi-plus-circle me-1"></i> List Your Property
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

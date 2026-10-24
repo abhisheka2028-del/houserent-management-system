@@ -1,0 +1,32 @@
+# ==============================================================================
+# HouseRent - Docker Compose Specification
+# Module 3: Containerization Using Docker
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  houserent-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: houserent:v1.0
+    container_name: houserent-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-houserent-docker-production-key-928374}
+      - DATABASE_PATH=/app/data/houserent.db
+      - UPLOAD_FOLDER=/app/data/uploads
+      - PORT=5000
+    volumes:
+      # Persistent host-to-container volume mount for SQLite and image uploads persistence
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
