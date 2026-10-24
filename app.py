@@ -109,14 +109,33 @@ def create_app(config_name=None):
     app.config.from_object(config_by_name[config_name])
 
     # Dynamic environment variable overrides: sensitive configuration read from environment
-    if os.environ.get("SECRET_KEY"):
-        app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
     if os.environ.get("DATABASE_PATH"):
         app.config["DATABASE_PATH"] = os.environ["DATABASE_PATH"]
     if os.environ.get("UPLOAD_FOLDER"):
         app.config["UPLOAD_FOLDER"] = os.environ["UPLOAD_FOLDER"]
     if os.environ.get("SESSION_COOKIE_SECURE") is not None:
         app.config["SESSION_COOKIE_SECURE"] = os.environ["SESSION_COOKIE_SECURE"].lower() in ("true", "1", "yes")
+
+    # Production security enforcement: require a real, non-default SECRET_KEY environment variable
+    if config_name == "production" or os.environ.get("RENDER"):
+        raw_secret = os.environ.get("SECRET_KEY") or app.config.get("SECRET_KEY")
+        insecure_keys = {
+            "houserent-prod-secure-env-fallback-key",
+            "houserent-dev-secret-key-2026-bca-microproject",
+            "your-secure-random-secret-key-replace-in-env",
+            "test-secret-key-isolated-env",
+            "change-me",
+            "secret",
+        }
+        if not raw_secret or not raw_secret.strip() or raw_secret.strip() in insecure_keys:
+            raise ValueError(
+                "CRITICAL SECURITY CONFIGURATION ERROR: Production deployment requires a real, secure "
+                "SECRET_KEY environment variable. Hardcoded development or fallback keys are strictly "
+                "prohibited in production. Please set SECRET_KEY in your Render dashboard or environment."
+            )
+        app.config["SECRET_KEY"] = raw_secret.strip()
+    elif os.environ.get("SECRET_KEY"):
+        app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
     # Ensure Flask debug mode is strictly disabled in production
     flask_debug = os.environ.get("FLASK_DEBUG", "").lower()

@@ -226,7 +226,7 @@ Navigate to: **`http://localhost:5000`**
 
 ## 7. Automated Testing Suite
 
-The project features **47 automated tests** covering authentication, role-based authorization, property CRUD operations, search filters, inquiry workflows, image upload validation, rate limiting, Render production deployment, and serverless logic. All tests run against an isolated temporary database fixture:
+The project features **51 automated tests** covering authentication, role-based authorization, property CRUD operations, search filters, inquiry workflows, image upload validation, rate limiting, Render Docker production deployment, and serverless logic. All tests run against an isolated temporary database fixture:
 
 ```powershell
 .\venv\Scripts\python -m pytest -v
@@ -238,9 +238,9 @@ The project features **47 automated tests** covering authentication, role-based 
 - **`tests/test_rental_requests.py` (6 tests):** Tenant rental request submission, missing date rejection, admin approval workflow, admin rejection workflow, tenant application timeline view, admin inquiry portal protection.
 - **`tests/test_upgrades.py` (11 tests):** Owner registration, owner dashboard access, renter isolation from owner portal, owner property creation with PNG image upload, invalid image extension rejection, executable binary header rejection, saved properties bookmark toggle, admin user management, user role updates, profile editing, and static pages.
 - **`tests/test_serverless.py` (4 tests):** AWS Lambda house availability endpoint, rental request payload validation, malformed inquiry rejection, and Amazon S3 `ObjectCreated` event processing.
-- **`tests/test_render_config.py` (8 tests):** `requirements.txt` production dependencies (`gunicorn`), `app:app` WSGI exposure, production debug mode disabled (`DEBUG=False`), Render auto-detection, environment secret key extraction, `/health` operational readiness, database data preservation across boots, and `gunicorn.conf.py` 0.0.0.0 dynamic port binding.
+- **`tests/test_render_config.py` (12 tests):** `requirements.txt` production dependencies (`gunicorn`), `app:app` WSGI exposure, production debug mode disabled (`DEBUG=False`), Render auto-detection, production startup failure without `SECRET_KEY`, rejection of hardcoded fallback keys, environment secret key extraction, `/health` operational readiness, database data preservation across boots, idempotent `AUTO_SEED_DATA` behavior, `gunicorn.conf.py` dynamic port binding, and Dockerfile shell execution & 512MB RAM worker tuning.
 
-**Test Execution Result:** `47 passed (100% pass rate)`.
+**Test Execution Result:** `51 passed (100% pass rate)`.
 
 ---
 
@@ -358,47 +358,55 @@ To test the serverless logic locally without an active AWS account:
 
 ## 11. Render Web Service Deployment Guide
 
-The House Rental Management System is fully pre-configured for automated or manual deployment onto **Render's Free Web Service tier**.
+The House Rental Management System is fully pre-configured for automated or manual deployment onto **Render's Free Web Service tier using the Docker runtime**.
 
 ### A. Deployment Methods
 
-#### Option 1: Render Blueprint (Infrastructure-as-Code — Recommended)
+#### Option 1: Render Blueprint (Infrastructure-as-Code via Docker Runtime — Recommended)
 1. Push your repository to GitHub or GitLab.
 2. In the [Render Dashboard](https://dashboard.render.com), click **New +** > **Blueprint**.
 3. Connect your repository. Render will automatically read [`render.yaml`](file:///e:/House%20Rental%20Microproject/render.yaml) and configure:
-   - **Service Name:** `houserent-system`
-   - **Environment:** `Python 3`
-   - **Plan:** `Free`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app:app` (automatically binds to `0.0.0.0:$PORT` via `gunicorn.conf.py`)
+   - **Service Name:** `houserent-docker`
+   - **Runtime:** `Docker`
+   - **Plan:** `Free` (512 MB RAM, 0.1 CPU)
+   - **Dockerfile Path:** `./Dockerfile`
    - **Health Check Path:** `/health`
-   - **Environment Variables:** Auto-generates a secure `SECRET_KEY`, sets `FLASK_ENV=production`, `FLASK_DEBUG=0`, `SESSION_COOKIE_SECURE=true`, and enables `AUTO_SEED_DATA=true`.
+   - **Environment Variables:**
+     - `SECRET_KEY`: Automatically generated cryptographic secret
+     - `FLASK_ENV`: `production`
+     - `FLASK_DEBUG`: `0`
+     - `DATABASE_PATH`: `/app/data/houserent.db`
+     - `UPLOAD_FOLDER`: `/app/data/uploads`
+     - `SESSION_COOKIE_SECURE`: `true`
+     - `AUTO_SEED_DATA`: `true` (populates demo catalog only on new database initialization)
+     - `WEB_CONCURRENCY`: `2` (Gunicorn worker processes tailored for 512MB RAM)
+     - `GUNICORN_THREADS`: `2`
 4. Click **Apply** to deploy.
 
-#### Option 2: Manual Web Service Creation
+#### Option 2: Manual Web Service Creation (Docker Runtime)
 1. Go to the [Render Dashboard](https://dashboard.render.com) > **New +** > **Web Service**.
 2. Connect your Git repository.
 3. Configure the following service settings:
-   - **Name:** `houserent-web`
+   - **Name:** `houserent-docker`
    - **Region:** Select the region nearest to your target users (e.g., Singapore, Frankfurt, Oregon, Ohio)
    - **Branch:** `main` (or your active release branch)
-   - **Runtime:** `Python 3`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app:app`
+   - **Runtime:** `Docker`
+   - **Dockerfile Path:** `./Dockerfile`
    - **Instance Type:** `Free`
 4. Expand **Advanced** and set **Health Check Path** to `/health`.
 5. Under **Environment Variables**, configure:
    | Key | Value | Description |
    | :--- | :--- | :--- |
-   | `FLASK_ENV` | `production` | Enables production configuration mode |
-   | `FLASK_DEBUG` | `0` | Strictly disables Flask interactive debugger |
-   | `SECRET_KEY` | *(Click "Generate" or paste random 32-byte hex)* | Used for cookie signing & CSRF protection |
-   | `DATABASE_PATH` | `database/houserent.db` | SQLite database file location |
-   | `UPLOAD_FOLDER` | `static/uploads` | Directory for uploaded property images |
+   | `FLASK_ENV` | `production` | Enforces production mode and disables debug features |
+   | `FLASK_DEBUG` | `0` | Disables Flask interactive debugger |
+   | `SECRET_KEY` | *(Click "Generate" or paste random 32-byte hex)* | **Required in production.** Hardcoded fallbacks are prohibited |
+   | `DATABASE_PATH` | `/app/data/houserent.db` | Container SQLite database location |
+   | `UPLOAD_FOLDER` | `/app/data/uploads` | Container directory for uploaded property photos |
    | `SESSION_COOKIE_SECURE` | `true` | Enforces HTTPS-only cookies (Render terminates TLS by default) |
-   | `AUTO_SEED_DATA` | `true` | Safely populates initial sample listings & users on empty database |
+   | `AUTO_SEED_DATA` | `true` | Safely populates initial demo listings on newly initialized DB only |
    | `WEB_CONCURRENCY` | `2` | 2 Gunicorn workers tuned for 512MB RAM |
-6. Click **Create Web Service**.
+   | `GUNICORN_THREADS` | `2` | 2 threads per worker for I/O concurrency |
+6. Click **Create Web Service**. Render builds the image from [Dockerfile](file:///e:/House%20Rental%20Microproject/Dockerfile), executes Gunicorn binding dynamically to `0.0.0.0:${PORT:-10000}`, and validates readiness via `/health`.
 
 ---
 

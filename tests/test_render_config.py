@@ -28,6 +28,7 @@ def test_production_config_disables_debug_mode(monkeypatch):
     """Ensure Flask debug mode is strictly False in production."""
     monkeypatch.setenv("FLASK_ENV", "production")
     monkeypatch.setenv("FLASK_DEBUG", "0")
+    monkeypatch.setenv("SECRET_KEY", "real-prod-custom-secret-key-xyz123")
     monkeypatch.delenv("RENDER", raising=False)
 
     app = create_app("production")
@@ -41,13 +42,32 @@ def test_render_environment_auto_detection_disables_debug(monkeypatch):
     monkeypatch.delenv("FLASK_CONFIG", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     monkeypatch.setenv("RENDER", "true")
+    monkeypatch.setenv("SECRET_KEY", "real-prod-custom-secret-key-xyz123")
 
     app = create_app()
     assert app.config["DEBUG"] is False, "DEBUG mode must be False when RENDER=true"
 
 
+def test_production_startup_fails_without_secret_key(monkeypatch):
+    """Verify production startup raises ValueError if SECRET_KEY is missing or empty."""
+    monkeypatch.setenv("FLASK_ENV", "production")
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        create_app("production")
+
+
+def test_production_startup_fails_with_fallback_secret_key(monkeypatch):
+    """Verify production startup rejects default insecure fallback keys."""
+    monkeypatch.setenv("FLASK_ENV", "production")
+    monkeypatch.setenv("SECRET_KEY", "houserent-prod-secure-env-fallback-key")
+
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        create_app("production")
+
+
 def test_secret_key_read_from_environment(monkeypatch):
-    """Ensure secret key is read directly from environment variables."""
+    """Ensure secret key is read directly from environment variables in production."""
     test_secret = "render-prod-custom-cryptographic-key-xyz987"
     monkeypatch.setenv("SECRET_KEY", test_secret)
     monkeypatch.setenv("FLASK_ENV", "production")
@@ -57,7 +77,7 @@ def test_secret_key_read_from_environment(monkeypatch):
 
 
 def test_health_check_endpoint_operational():
-    """Verify that /health responds with 200 and healthy status."""
+    """Verify that /health responds with HTTP 200 and healthy status."""
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
     try:
         init_db(db_path)
@@ -119,6 +139,38 @@ def test_database_initialization_does_not_overwrite_existing_data():
             os.remove(db_path)
 
 
+def test_auto_seed_data_does_not_overwrite_existing_records(monkeypatch):
+    """Verify AUTO_SEED_DATA does not overwrite or duplicate data if DB already has records."""
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    try:
+        init_db(db_path)
+        conn = get_db_connection(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (username, email, password_hash, full_name, role) "
+            "VALUES ('existing_user', 'existing@example.com', 'pwd_hash', 'Existing User', 'renter')"
+        )
+        conn.commit()
+        conn.close()
+
+        # Set AUTO_SEED_DATA=true and boot app pointing to existing DB
+        monkeypatch.setenv("AUTO_SEED_DATA", "true")
+        monkeypatch.setenv("DATABASE_PATH", db_path)
+
+        app = create_app("testing")
+
+        # Verify existing user remains and houses table is not forcefully overwritten
+        conn2 = get_db_connection(db_path)
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT COUNT(*) FROM users WHERE username = 'existing_user'")
+        assert cursor2.fetchone()[0] == 1
+        conn2.close()
+    finally:
+        os.close(db_fd)
+        if os.path.exists(db_path):
+            os.remove(db_path)
+
+
 def test_gunicorn_conf_binds_to_port(monkeypatch):
     """Verify that gunicorn.conf.py configures bind to 0.0.0.0 and respects PORT env var."""
     monkeypatch.setenv("PORT", "10000")
@@ -131,4 +183,21 @@ def test_gunicorn_conf_binds_to_port(monkeypatch):
     spec.loader.exec_module(conf)
 
     assert conf.bind == "0.0.0.0:10000", "gunicorn.conf.py must bind to 0.0.0.0:$PORT"
-    assert conf.workers >= 1, "workers must be >= 1"
+    assert conf.workers == 2, "workers should be tuned to 2 for Render 512MB RAM"
+
+
+def test_dockerfile_render_configuration():
+    """Verify Dockerfile uses reliable shell syntax, dynamic PORT with 10000 fallback, and 2 workers."""
+    dockerfile_path = Path(__file__).resolve().parent.parent / "Dockerfile"
+    assert dockerfile_path.exists()
+    content = dockerfile_path.read_text()
+
+    # Dynamic port binding and fallback
+    assert "${PORT:-10000}" in content or "$PORT" in content, "Dockerfile must use dynamic PORT with 10000 fallback"
+    # Shell wrapper execution
+    assert 'CMD ["sh", "-c"' in content or "CMD sh -c" in content, "Dockerfile CMD must execute via shell to expand ${PORT}"
+    # Appropriate worker count
+    assert "WEB_CONCURRENCY=2" in content or "--workers 2" in content or "${WEB_CONCURRENCY:-2}" in content
+    # Healthcheck
+    assert "HEALTHCHECK" in content
+    assert "/health" in content

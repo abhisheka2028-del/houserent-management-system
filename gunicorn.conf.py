@@ -7,8 +7,8 @@ When executing `gunicorn app:app`, Gunicorn automatically loads this configurati
 import os
 
 # Render dynamically assigns an external listening port through the PORT env var.
-# Default to 5000 for local container and testing runs.
-port = os.environ.get("PORT", "5000")
+# Default to 10000 as fallback for Render production, overridable by environment.
+port = os.environ.get("PORT", "10000")
 bind = f"0.0.0.0:{port}"
 
 # Process & concurrency model

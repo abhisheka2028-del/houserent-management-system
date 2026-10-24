@@ -42,7 +42,8 @@ class ProductionConfig(Config):
         "SESSION_COOKIE_SECURE",
         "true" if os.environ.get("RENDER") else "false"
     ).lower() in ("true", "1", "yes")
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "houserent-prod-secure-env-fallback-key"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+
 
 config_by_name = {
     "development": DevelopmentConfig,
